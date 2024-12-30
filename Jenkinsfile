@@ -1,42 +1,42 @@
-pipeline{
-  agent any
-  environment{
-    PYTHON_PATH='C:/Users/karan/AppData/Local/Programs/Python/Python312;C:/Users/karan/AppData/Local/Programs/Python/Python312/Scripts'
-  }
-  stages{
-    stage('checkout'){
-      steps{
-        checkout scm
-      }
+pipeline {
+    agent any
+    environment {
+        PYTHON_PATH = 'C:/Users/karan/AppData/Local/Programs/Python/Python312;C:/Users/karan/AppData/Local/Programs/Python/Python312/Scripts'
+        SONAR_SCANNER_PATH = 'C:/Users/karan/Downloads/sonar-scanner-cli-6.2.1.4610-windows-x64/sonar-scanner-6.2.1.4610-windows-x64/bin'
     }
-  stage('build'){
-    steps{
-      bat '''
-      set PATH=%PYTHON_PATH%;%PATH%
-      pip install -r requirements.txt
-      '''
-    }
-  }
-  stage('sonarqube-Analysis'){
-    environment{
-      SONAR_TOKEN=cfredentials('sonar-token')
-    }
-   steps {
-                // Ensure that sonar-scanner is in the PATH
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build') {
+            steps {
+                bat '''
+                set PATH=%PYTHON_PATH%;%PATH%
+                python --version
+                pip --version
+                pip install -r requirements.txt
+                '''
+            }
+        }
+        stage('SonarQube Analysis') {
+            environment {
+                SONAR_TOKEN = credentials('sonar-token') // Corrected to use `credentials`
+            }
+            steps {
                 bat '''
                 set PATH=%SONAR_SCANNER_PATH%;%PATH%
-                where sonar-scanner || echo "SonarQube scanner not found. Please install it."
-                set PATH=%PYTHON_PATH%;%PATH%
+                where sonar-scanner || echo "SonarQube scanner not found. Please ensure it is installed and correctly configured."
                 sonar-scanner -Dsonar.projectKey=test ^
-                    -Dsonar.sources=. ^
-                    -Dsonar.host.url=http://localhost:9000 ^
-                    -Dsonar.token=%SONAR_TOKEN%
+                               -Dsonar.sources=. ^
+                               -Dsonar.host.url=http://localhost:9000 ^
+                               -Dsonar.login=%SONAR_TOKEN%
                 '''
-    
-   }
-  }
-}
-post {
+            }
+        }
+    }
+    post {
         success {
             echo 'Pipeline completed successfully'
         }
@@ -48,4 +48,3 @@ post {
         }
     }
 }
-  
